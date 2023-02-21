@@ -13,6 +13,15 @@ variable "image_id" {
 // this is a input variable
 variable "tag_name" {
   //default = "app"
-  type = string
+  type        = string
   description = "Enter tag name for all resoucres"
 }
+
+variable "port_number" {
+  description = "List of Ports where server runs"
+  //type = list(number)
+  type = number
+  //default = [ 8080,8081,8082 ]
+
+}
+//var.port_numbers[0]
