@@ -39,6 +39,11 @@ output "public_ip" {
   value = aws_instance.app_server.public_ip
 }
 
+module "my-s3-module" {
+  source = "./modules/s3-module"
+  bucket_name = "varun-test-bucket"
+}
+
 #type and name of resoucre 
 resource "aws_instance" "app_server" {
   // ami                    = var.image_id
@@ -65,20 +70,7 @@ resource "aws_vpc" "varun_app_vpc" {
 }
 */
 
-#these names b_varun_bucket are terraform objects - not AWS bucket names - 
-/*
-resource "aws_s3_bucket" "b" {
-  tags = {
-    Name = "My bucket varun"
-  }
-  count = 4
-  bucket = "2023-02-20-varunApp-bucket-${count.index}"
-  //Setup S3 bucket to hold state 
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-*/
+
 
 resource "aws_security_group" "allow_port_8080" {
   name        = "${terraform.workspace}-allow_port_8080"
@@ -102,18 +94,7 @@ locals {
 }
 //to use this variable write as - local.temp_port
 
-//looping on resource to create 3 S3 buckets
-/*
-variable "bucket_names" {
-  description = "List of bucket name"
-  type = list(string)
-  default = [ "main","backup","dev" ]
-}
-resource "aws_s3_bucket" "app_image_buckets" {
-  for_each = toset(var.bucket_names)
-  bucket = "app-image-bucket-${each.value}"
-}
-*/
+
 
 //using data variables
 data "aws_vpc" "default" {
@@ -139,3 +120,10 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
   }
 }
 */
+
+
+//Copy and paste into your Terraform configuration below lines, insert the variables, and run terraform init:
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "3.19.0"
+}
