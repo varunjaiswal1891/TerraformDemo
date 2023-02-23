@@ -7,8 +7,18 @@ terraform {
     }
   }
   required_version = "~>0.12.0"
+  //configure remote backend for terraform to lock and hold state file for multiple developers to work by acquiring lock 
+  backend "s3" {
+    bucket = "terraform-app-state"
+    key = "global/s3/terraform.tfstate"
+    region = "us-west-2"
+    dynamodb_table = "terraform_state_lock"
+    encrypt = true
+  }
 }
 */
+
+
 provider "aws" {
   profile = "default"
   //region  = "ap-south-1"
@@ -34,6 +44,7 @@ resource "aws_instance" "app_server" {
   // ami                    = var.image_id
   ami                    = "ami-0f1a5f5ada0e7da53"
   instance_type          = "t2.micro"
+  //instance_type        = terraform.workspace == "dev" ? "t2.micro":"t2.medium"
   vpc_security_group_ids = [aws_security_group.allow_port_8080.id]
   user_data              = <<-EOF
     #!/bin/bash
@@ -62,11 +73,15 @@ resource "aws_s3_bucket" "b" {
   }
   count = 4
   bucket = "2023-02-20-varunApp-bucket-${count.index}"
+  //Setup S3 bucket to hold state 
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 */
 
 resource "aws_security_group" "allow_port_8080" {
-  name        = "allow_port_8080"
+  name        = "${terraform.workspace}-allow_port_8080"
   description = "Allow 8080 inbound traffic"
  // vpc_value_temp = data.aws_vpc.default
   ingress {
@@ -108,3 +123,19 @@ data "aws_vpc" "default" {
 output "aws_default_vpc_info" {
   value = data.aws_vpc.default
 }
+data "aws_subnet_ids" "subnet_ids" {
+  vpc_id = data.aws_vpc.default.id 
+}
+
+//setup DynamoDB to support locking
+/*
+resource "aws_dynamodb_table" "terraform_state_lock" {
+  name = "terraform-state-lock"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key = "lock_id"
+  attribute {
+    name = "lock_id"
+    type = "S"
+  }
+}
+*/
